@@ -1,22 +1,48 @@
 # 🛡️ VulnScanner — 自动化 Web 漏洞扫描平台
 
-> 简历项目 | Python FastAPI + Vue 3 + Celery + PostgreSQL + Docker
+> 网安简历项目 | Python FastAPI + Vue 3 + Celery + SQLite + Docker
 
-一个 **Web 管理平台 + 自动化扫描引擎**，聚焦 **SQL 注入、XSS、文件上传** 三类漏洞的自动化检测，支持 WAF 识别与自适应绕过。
+一个 **Web 管理平台 + 自动化扫描引擎**，覆盖 **7 类 Web 漏洞**的自动化检测，支持 WAF 识别与自适应绕过，内置置信度评分与去重。
+
+**在线演示:** http://121.43.231.191:8082 | Token: 通过环境变量 `SCANNER_TOKEN` 配置
 
 ---
 
-## ✨ 核心功能
+## ✨ 核心功能 (v2.0)
+
+### 漏洞检测（7 类）
 
 | 功能 | 说明 |
 |------|------|
-| 🔍 **SQL 注入检测** | Error-based / Boolean-based Blind / Time-based Blind / Union-based，自动识别 MySQL/MSSQL/PostgreSQL/Oracle 数据库 |
-| 💉 **XSS 检测** | 反射型 / 存储型 / DOM-based，Payload 存活检测 + 自动变异绕过 |
-| 📁 **文件上传检测** | 10+ 种绕过 Payload：扩展名/Content-Type/魔法字节/图片马/条件竞争 |
+| 🔍 **SQL 注入** | Error-based / Boolean Blind / Time Blind / Union-based，自动识别 5 种数据库 |
+| 💉 **XSS** | 反射型 / 存储型 / DOM-based，3 级 Payload 库 + 自动变异绕过 |
+| 📁 **文件上传** | 14 种绕过 Payload：扩展名/Content-Type/魔法字节/图片马/条件竞争 |
+| 💻 **命令注入** | Time-based + Output-based + Error-based，覆盖 Linux/Windows |
+| 📂 **路径遍历/LFI** | Linux/Windows 路径 + 编码绕过 + PHP 封装器检测 |
+| 🌐 **SSRF** | 云元数据 / 内网服务探测 / 协议走私 / IP 绕过变体 |
+| 🔓 **信息泄露** | 200+ 敏感路径：.git/.env/备份文件/Swagger/Actuator/phpinfo |
+
+### 引擎特性
+
+| 功能 | 说明 |
+|------|------|
 | 🛡️ **WAF 识别** | 自动检测阿里云WAF/Cloudflare/安全狗/长亭雷池/ModSecurity |
-| 🔧 **WAF 绕过** | 编码器(URL/Unicode/Hex) + Tamper脚本(SQL注入语义变换) |
-| 📊 **Web 管理平台** | 仪表盘、任务管理、实时扫描进度(WebSocket)、报告生成 |
-| 🐳 **一键部署** | Docker Compose 编排，5 个服务一键启动 |
+| 🔧 **WAF 绕过** | 统一绕过引擎：7 编码器 + 9 Tamper + 链式绕过 |
+| 📊 **置信度评分** | 每个漏洞 0-1 置信度，自动去重保留最高分 |
+| 🔌 **插件架构** | 继承 BasePlugin 即可扩展，自动注册到引擎 |
+| 🔐 **Token 认证** | Bearer Token + 登录页 + 路由守卫 |
+| 🚫 **任务取消** | Redis 信号机制，运行中任务可随时取消 |
+
+### Web 管理平台
+
+| 功能 | 说明 |
+|------|------|
+| 📊 **仪表盘** | ECharts 可视化统计，漏洞类型/严重度分布 |
+| 📋 **任务管理** | 创建/列表/详情/删除，7 种漏洞类型可选 |
+| ⚡ **实时进度** | WebSocket 推送扫描进度，漏洞实时展示 |
+| 📄 **报告导出** | JSON/HTML 格式，含完整 PoC 和修复建议 |
+| 🎯 **内置靶场** | 7 个 PHP 漏洞靶场用于自测验证 |
+| 🐳 **一键部署** | Docker Compose 5 服务编排，10 分钟上线 |
 
 ---
 
