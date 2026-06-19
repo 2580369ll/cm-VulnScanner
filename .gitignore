@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+*.egg
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# Docker
+pgdata/
+redisdata/
+
+# IDE
+.vscode/
+.idea/
+
+# 环境
+.env
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 靶场
+targets/xss/comments.json
+targets/upload/uploads/
