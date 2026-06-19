@@ -6,6 +6,9 @@ from urllib.parse import urlparse
 
 import httpx
 
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 2  # 秒，指数退避: 2s → 4s → 8s
+
 from app.config import settings
 from app.scanner.crawler import Crawler
 from app.scanner.waf_detector import WAFDetector
@@ -48,7 +51,7 @@ class ScanEngine:
         self.base_scheme = parsed.scheme
 
         # HTTP 客户端
-        limits = httpx.Limits(max_connections=20, max_keepalive_connections=10)
+        limits = httpx.Limits(max_connections=100, max_keepalive_connections=20)
         self.client_kwargs = {
             "timeout": httpx.Timeout(settings.request_timeout),
             "limits": limits,
@@ -57,6 +60,9 @@ class ScanEngine:
         }
         if proxy:
             self.client_kwargs["proxy"] = proxy
+
+        # 并发控制：单目标最多 10 并发
+        self.semaphore = asyncio.Semaphore(10)
 
     async def run(self) -> list[dict]:
         """执行完整扫描流程"""
@@ -176,6 +182,22 @@ class ScanEngine:
                 plugins.append(plugin_map[vuln_type](client, waf_info))
 
         return plugins
+
+    async def _fetch_with_retry(self, client, url, method="GET", **kwargs):
+        import httpx as _httpx
+        for attempt in range(MAX_RETRIES):
+            try:
+                resp = await client.request(method, url, **kwargs)
+                return resp
+            except _httpx.TimeoutException:
+                if attempt < MAX_RETRIES - 1:
+                    await asyncio.sleep(RETRY_DELAY_BASE * (2 ** attempt))
+            except _httpx.ConnectError:
+                break
+            except Exception:
+                if attempt < MAX_RETRIES - 1:
+                    await asyncio.sleep(RETRY_DELAY_BASE)
+        return None
 
     def _is_cancelled(self) -> bool:
         """检查 Redis 中是否有取消信号"""

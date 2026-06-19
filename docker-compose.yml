@@ -5,14 +5,14 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: vs-db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: scanner
-      POSTGRES_PASSWORD: scanner_pass_2024
-      POSTGRES_DB: vuln_scanner
+      POSTGRES_USER: ${DB_USER:-scanner}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-scanner_pass_2024}
+      POSTGRES_DB: ${DB_NAME:-vuln_scanner}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # 数据库端口不暴露到宿主机，仅容器间通信
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U scanner -d vuln_scanner"]
       interval: 5s
@@ -23,11 +23,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: vs-redis
+    restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
       - redisdata:/data
-    ports:
-      - "6379:6379"
+    # Redis 端口不暴露到宿主机
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -40,6 +40,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: vs-backend
+    restart: unless-stopped
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
@@ -62,6 +63,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: vs-worker
+    restart: unless-stopped
     command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
     volumes:
       - ./backend:/app
@@ -82,6 +84,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: vs-frontend
+    restart: unless-stopped
     command: npm run dev -- --host 0.0.0.0
     volumes:
       - ./frontend:/app
@@ -97,6 +100,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: vs-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
     volumes:
@@ -109,6 +113,7 @@ services:
   targets:
     image: php:8.2-apache
     container_name: vs-targets
+    restart: unless-stopped
     volumes:
       - ./targets:/var/www/html
     ports:

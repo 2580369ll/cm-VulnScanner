@@ -20,7 +20,7 @@ def hex_encode(payload: str) -> str:
 
 
 def unicode_encode(payload: str) -> str:
-    """Unicode 编码 (\uXXXX 格式)"""
+    r"""Unicode 编码 (\uXXXX 格式)"""
     result = []
     for char in payload:
         result.append(f"\\u{ord(char):04x}")

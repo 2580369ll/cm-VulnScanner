@@ -1,16 +1,22 @@
 """FastAPI 应用入口"""
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.models import init_db
-from app.auth import AuthMiddleware, SECRET_TOKEN
+from app.auth import AuthMiddleware, create_token, verify_token
 from app.api.tasks import router as tasks_router
 from app.api.results import router as results_router
 from app.api.websocket import router as ws_router
+
+# 速率限制：每分钟最多 20 次请求
+limiter = Limiter(key_func=get_remote_address, default_limits=["20/minute"])
 
 
 @asynccontextmanager
@@ -30,7 +36,11 @@ app = FastAPI(
 # CORS 中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:8082",
+        "http://121.43.231.191:8082",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,6 +48,9 @@ app.add_middleware(
 
 # 认证中间件
 app.add_middleware(AuthMiddleware)
+
+# 速率限制
+app.state.limiter = limiter
 
 # 注册路由
 app.include_router(tasks_router, prefix="/api")
@@ -53,8 +66,11 @@ async def health_check():
 
 @app.post("/api/auth/login")
 async def login(data: dict):
-    """简单登录：验证 Token"""
-    token = data.get("token", "")
-    if token == SECRET_TOKEN:
-        return {"success": True, "token": token}
+    """JWT 登录：验证密码后返回 JWT Token"""
+    from app import auth
+    password = data.get("token", "")
+    legacy_token = os.getenv("SCANNER_TOKEN", "vulnscanner2024")
+    if password == legacy_token:
+        jwt_token = create_token()
+        return {"success": True, "token": jwt_token, "expires_in": auth.TOKEN_EXPIRE_HOURS * 3600}
     return {"success": False, "detail": "Token 无效"}
