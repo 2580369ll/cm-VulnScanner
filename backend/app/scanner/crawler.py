@@ -1,4 +1,4 @@
-"""Web 爬虫 — 发现注入点（链接、表单、文件上传入口）"""
+"""Web 爬虫 — 发现注入点（链接、表单、文件上传入口、Header/Cookie）"""
 
 import asyncio
 from urllib.parse import urljoin, urlparse
@@ -7,6 +7,22 @@ import httpx
 from bs4 import BeautifulSoup
 
 from app.scanner.plugins.base import InjectionPoint
+
+# 可注入的 HTTP 请求头
+INJECTABLE_HEADERS = [
+    "X-Forwarded-For",
+    "X-Real-IP",
+    "X-Forwarded-Host",
+    "User-Agent",
+    "Referer",
+    "X-Originating-IP",
+    "X-Remote-IP",
+    "X-Remote-Addr",
+    "X-Client-IP",
+    "X-Host",
+    "X-Forwarded-Server",
+    "Forwarded",
+]
 
 
 class Crawler:
@@ -66,6 +82,12 @@ class Crawler:
 
                 # 4) JSON API 端点注入点
                 self._extract_api_endpoints(soup, url)
+
+                # 5) Header 注入点（基于响应 Set-Cookie 和通用可注入头）
+                self._extract_header_points(url, response)
+
+                # 6) Cookie 注入点（解析 Set-Cookie）
+                self._extract_cookie_points(url, response)
 
             except Exception:
                 continue
@@ -160,13 +182,11 @@ class Crawler:
 
     def _extract_api_endpoints(self, soup: BeautifulSoup, page_url: str):
         """从页面 JS 中提取 API 端点"""
-        # 查找 fetch/axios/ajax 调用
         scripts = soup.find_all("script")
         for script in scripts:
             if not script.string:
                 continue
             import re
-            # 匹配常见的 API URL 模式
             patterns = [
                 r'["\'](/api/[^"\'\s]+)["\']',
                 r'["\'](/v\d+/[^"\'\s]+)["\']',
@@ -179,3 +199,30 @@ class Crawler:
                         full_url = urljoin(page_url, match.split("?")[0])
                         if self._is_same_domain(full_url) and "?" in match:
                             self._extract_url_params(urljoin(page_url, match))
+
+    def _extract_header_points(self, url: str, response):
+        """为常见可注入 HTTP 头创建注入点"""
+        for header_name in INJECTABLE_HEADERS:
+            self.injection_points.append(InjectionPoint(
+                url=url,
+                method="GET",
+                param_name=header_name,
+                param_type="header",
+            ))
+
+    def _extract_cookie_points(self, url: str, response):
+        """从 Set-Cookie 响应头中提取 Cookie 注入点"""
+        set_cookie = response.headers.get("set-cookie", "")
+        if not set_cookie:
+            return
+
+        # 解析 Set-Cookie: name=value; Path=/; ...
+        import re
+        cookie_names = re.findall(r'^([^=;]+)=', set_cookie)
+        for name in cookie_names[:5]:  # 最多 5 个
+            self.injection_points.append(InjectionPoint(
+                url=url,
+                method="GET",
+                param_name=name.strip(),
+                param_type="cookie",
+            ))

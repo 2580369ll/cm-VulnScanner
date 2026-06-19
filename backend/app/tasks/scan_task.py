@@ -72,6 +72,7 @@ def run_scan_task(self, task_id: str):
                     custom_cookies=cookies,
                     proxy=task.proxy,
                     progress_callback=progress_callback,
+                    task_id=task_id,
                 )
 
                 findings = await engine.run()
@@ -84,6 +85,7 @@ def run_scan_task(self, task_id: str):
                         task_id=task_id,
                         vuln_type=f["type"],
                         severity=f["severity"],
+                        confidence=f.get("confidence", 0.8),
                         endpoint=f["endpoint"],
                         parameter=f.get("parameter", ""),
                         method=f.get("method", "GET"),

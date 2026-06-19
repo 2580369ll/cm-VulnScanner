@@ -21,12 +21,13 @@ class InjectionPoint:
 @dataclass
 class Finding:
     """漏洞发现结果"""
-    vuln_type: str          # sqli / xss / file_upload
+    vuln_type: str          # sqli / xss / file_upload / command_injection / path_traversal / ssrf / info_disclosure
     severity: str           # critical / high / medium / low / info
-    endpoint: str           # 漏洞所在 URL
-    parameter: str          # 漏洞参数
-    method: str             # HTTP 方法
-    payload: str            # 触发漏洞的 Payload
+    confidence: float = 0.8  # 置信度 0-1，越高越可信
+    endpoint: str = ""      # 漏洞所在 URL
+    parameter: str = ""     # 漏洞参数
+    method: str = "GET"     # HTTP 方法
+    payload: str = ""       # 触发漏洞的 Payload
     payload_variant: str = ""     # 使用的绕过变体名称
     request_raw: str = ""        # 原始 HTTP 请求（文本格式）
     response_raw: str = ""       # 原始 HTTP 响应（文本格式）
@@ -39,6 +40,7 @@ class Finding:
         return {
             "type": self.vuln_type,
             "severity": self.severity,
+            "confidence": self.confidence,
             "endpoint": self.endpoint,
             "parameter": self.parameter,
             "method": self.method,

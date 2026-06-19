@@ -20,8 +20,7 @@ from app.scanner.payloads.sqli_payloads import (
     get_union_payloads,
     detect_db_type,
 )
-from app.scanner.bypass.encoder import apply_encoder
-from app.scanner.bypass.tamper import apply_tamper
+from app.scanner.bypass import apply_bypass
 
 
 class SQLiPlugin(BasePlugin):
@@ -106,10 +105,10 @@ class SQLiPlugin(BasePlugin):
         probes = get_error_probes()
 
         for probe in probes[:6]:  # 前6个基础探测
-            for tamper_name in self.waf_info.get("bypass_methods", [None])[:2]:
+            for tamper_name in self.waf_info.get("bypass_methods", [None]):
                 payload = probe["payload"]
                 if tamper_name:
-                    payload = apply_tamper(payload, tamper_name)
+                    payload = apply_bypass(payload, tamper_name)
 
                 injected = self._inject_payload(params, payload)
                 try:
@@ -122,6 +121,7 @@ class SQLiPlugin(BasePlugin):
                         return Finding(
                             vuln_type="sqli",
                             severity="high",
+                            confidence=0.95,
                             endpoint=ip.url,
                             parameter=ip.param_name,
                             method=ip.method,
@@ -155,12 +155,12 @@ class SQLiPlugin(BasePlugin):
                 continue
 
             # 应用 tamper
-            for tamper_name in self.waf_info.get("bypass_methods", [None])[:2]:
+            for tamper_name in self.waf_info.get("bypass_methods", [None]):
                 tp = true_payload["payload"]
                 fp = false_payload["payload"]
                 if tamper_name:
-                    tp = apply_tamper(tp, tamper_name)
-                    fp = apply_tamper(fp, tamper_name)
+                    tp = apply_bypass(tp, tamper_name)
+                    fp = apply_bypass(fp, tamper_name)
 
                 try:
                     true_params = self._inject_payload(params, tp)
@@ -178,6 +178,7 @@ class SQLiPlugin(BasePlugin):
                         return Finding(
                             vuln_type="sqli",
                             severity="high",
+                            confidence=0.95,
                             endpoint=ip.url,
                             parameter=ip.param_name,
                             method=ip.method,
@@ -215,9 +216,9 @@ class SQLiPlugin(BasePlugin):
             payload = tp["payload"]
             expected_delay = tp.get("delay", 5)
 
-            for tamper_name in self.waf_info.get("bypass_methods", [None])[:1]:
+            for tamper_name in self.waf_info.get("bypass_methods", [None]):
                 if tamper_name:
-                    payload = apply_tamper(payload, tamper_name)
+                    payload = apply_bypass(payload, tamper_name)
 
                 injected = self._inject_payload(params, payload)
                 try:
@@ -230,6 +231,7 @@ class SQLiPlugin(BasePlugin):
                         return Finding(
                             vuln_type="sqli",
                             severity="critical",
+                            confidence=0.70,
                             endpoint=ip.url,
                             parameter=ip.param_name,
                             method=ip.method,
@@ -280,6 +282,7 @@ class SQLiPlugin(BasePlugin):
                         return Finding(
                             vuln_type="sqli",
                             severity="critical",
+                            confidence=0.70,
                             endpoint=ip.url,
                             parameter=ip.param_name,
                             method=ip.method,

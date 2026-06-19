@@ -81,6 +81,28 @@ async def delete_task(task_id: str, db: AsyncSession = Depends(get_db)):
     return {"message": "任务已删除"}
 
 
+@router.post("/tasks/{task_id}/cancel")
+async def cancel_task(task_id: str, db: AsyncSession = Depends(get_db)):
+    """取消正在运行的扫描任务"""
+    result = await db.execute(select(ScanTask).where(ScanTask.id == task_id))
+    task = result.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    if task.status not in ("pending", "running"):
+        raise HTTPException(status_code=400, detail="只能取消等待中或运行中的任务")
+
+    # 设置取消信号到 Redis
+    from app.config import settings
+    import redis
+    r = redis.from_url(settings.redis_url)
+    r.setex(f"cancel:{task_id}", 300, "1")
+    r.close()
+
+    task.status = "cancelled"
+    await db.commit()
+    return {"message": "任务已取消"}
+
+
 @router.get("/stats")
 async def get_stats(db: AsyncSession = Depends(get_db)):
     """获取仪表盘统计数据"""

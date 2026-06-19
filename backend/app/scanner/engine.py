@@ -13,6 +13,10 @@ from app.scanner.plugins.base import InjectionPoint, Finding
 from app.scanner.plugins.sqli import SQLiPlugin
 from app.scanner.plugins.xss import XSSPlugin
 from app.scanner.plugins.file_upload import FileUploadPlugin
+from app.scanner.plugins.command_injection import CommandInjectionPlugin
+from app.scanner.plugins.path_traversal import PathTraversalPlugin
+from app.scanner.plugins.ssrf import SSRFPlugin
+from app.scanner.plugins.info_disclosure import InfoDisclosurePlugin
 
 
 class ScanEngine:
@@ -27,6 +31,7 @@ class ScanEngine:
         custom_cookies: dict | None = None,
         proxy: str | None = None,
         progress_callback=None,
+        task_id: str = "",
     ):
         self.target_url = target_url.rstrip("/")
         self.scan_depth = min(scan_depth, settings.max_scan_depth)
@@ -35,6 +40,7 @@ class ScanEngine:
         self.custom_cookies = custom_cookies or {}
         self.proxy = proxy
         self.progress = progress_callback
+        self.task_id = task_id
 
         # 解析目标域名
         parsed = urlparse(self.target_url)
@@ -96,6 +102,12 @@ class ScanEngine:
             plugins = self._create_plugins(client, waf_info)
 
             for idx, ip in enumerate(injection_points):
+                # 检查取消信号
+                if self._is_cancelled():
+                    if self.progress:
+                        await self.progress({"type": "scan_cancelled"})
+                    return []
+
                 if self.progress:
                     await self.progress({
                         "type": "scanning",
@@ -141,21 +153,48 @@ class ScanEngine:
                 "total_vulns": len(all_findings),
             })
 
+        # 去重：同一端点+参数+类型只保留最高置信度
+        all_findings = self._deduplicate_findings(all_findings)
+
         return [f.to_dict() for f in all_findings]
 
     def _create_plugins(self, client: httpx.AsyncClient, waf_info: dict) -> list:
         """根据配置创建插件列表"""
-        plugins = []
-
         plugin_map = {
-            "sqli": (SQLiPlugin, "SQL注入"),
-            "xss": (XSSPlugin, "跨站脚本"),
-            "file_upload": (FileUploadPlugin, "文件上传"),
+            "sqli": SQLiPlugin,
+            "xss": XSSPlugin,
+            "file_upload": FileUploadPlugin,
+            "command_injection": CommandInjectionPlugin,
+            "path_traversal": PathTraversalPlugin,
+            "ssrf": SSRFPlugin,
+            "info_disclosure": InfoDisclosurePlugin,
         }
 
+        plugins = []
         for vuln_type in self.vuln_types:
             if vuln_type in plugin_map:
-                plugin_cls, _ = plugin_map[vuln_type]
-                plugins.append(plugin_cls(client, waf_info))
+                plugins.append(plugin_map[vuln_type](client, waf_info))
 
         return plugins
+
+    def _is_cancelled(self) -> bool:
+        """检查 Redis 中是否有取消信号"""
+        if not self.task_id:
+            return False
+        try:
+            import redis
+            r = redis.from_url(settings.redis_url)
+            cancelled = r.exists(f"cancel:{self.task_id}")
+            r.close()
+            return bool(cancelled)
+        except Exception:
+            return False
+
+    def _deduplicate_findings(self, findings: list[Finding]) -> list[Finding]:
+        """去重：同一 (endpoint, parameter, vuln_type) 只保留最高置信度的"""
+        best: dict[tuple, Finding] = {}
+        for f in findings:
+            key = (f.endpoint, f.parameter, f.vuln_type)
+            if key not in best or f.confidence > best[key].confidence:
+                best[key] = f
+        return list(best.values())
