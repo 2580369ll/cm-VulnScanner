@@ -26,15 +26,17 @@
 
         <el-form-item label="漏洞类型">
           <el-checkbox-group v-model="form.vuln_types">
-            <el-checkbox label="sqli" border size="large">
-              <span style="font-size:16px;">🔍</span> SQL 注入
-            </el-checkbox>
-            <el-checkbox label="xss" border size="large">
-              <span style="font-size:16px;">💉</span> XSS 跨站脚本
-            </el-checkbox>
-            <el-checkbox label="file_upload" border size="large">
-              <span style="font-size:16px;">📁</span> 文件上传
-            </el-checkbox>
+            <el-checkbox label="sqli" border size="large">🔍 SQL 注入</el-checkbox>
+            <el-checkbox label="xss" border size="large">💉 XSS 跨站脚本</el-checkbox>
+            <el-checkbox label="file_upload" border size="large">📁 文件上传</el-checkbox>
+            <el-checkbox label="command_injection" border size="large">💻 命令注入</el-checkbox>
+            <el-checkbox label="path_traversal" border size="large">📂 路径遍历</el-checkbox>
+            <el-checkbox label="ssrf" border size="large">🌐 SSRF</el-checkbox>
+            <el-checkbox label="info_disclosure" border size="large">🔓 信息泄露</el-checkbox>
+            <el-checkbox label="ssti" border size="large">🎨 模板注入</el-checkbox>
+            <el-checkbox label="idor" border size="large">🔑 越权IDOR</el-checkbox>
+            <el-checkbox label="open_redirect" border size="large">↗️ 重定向</el-checkbox>
+            <el-checkbox label="csrf" border size="large">🛡️ CSRF</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 
@@ -97,7 +99,7 @@ const submitting = ref(false)
 const form = reactive({
   target_url: '',
   scan_depth: 2,
-  vuln_types: ['sqli', 'xss', 'file_upload'],
+  vuln_types: ['sqli', 'xss', 'file_upload', 'command_injection', 'path_traversal', 'ssrf', 'info_disclosure', 'ssti', 'idor', 'open_redirect', 'csrf'],
   custom_headers: '',
   custom_cookies: '',
   proxy: '',
