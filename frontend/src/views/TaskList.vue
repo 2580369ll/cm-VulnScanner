@@ -8,7 +8,15 @@
     </div>
 
     <el-card>
-      <el-table :data="tasks" v-loading="loading" stripe>
+      <div style="margin-bottom:12px;display:flex;gap:8px;">
+        <el-radio-group v-model="statusFilter" size="small" @change="loadTasks">
+          <el-radio-button value="">全部</el-radio-button>
+          <el-radio-button value="completed">已完成</el-radio-button>
+          <el-radio-button value="running">扫描中</el-radio-button>
+          <el-radio-button value="failed">失败</el-radio-button>
+        </el-radio-group>
+      </div>
+      <el-table :data="filteredTasks" v-loading="loading" stripe>
         <el-table-column prop="target_url" label="扫描目标" show-overflow-tooltip min-width="200" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -71,11 +79,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { defineOptions } from "vue"
+defineOptions({ name: "TaskList" })
+import { ref, onMounted, computed } from 'vue'
 import { taskApi } from '../api/tasks'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const tasks = ref([])
+const allTasks = ref([])
+
+const filteredTasks = computed(() => {
+  if (!statusFilter.value) return allTasks.value
+  return allTasks.value.filter(t => t.status === statusFilter.value)
+})
 const loading = ref(false)
 const page = ref(1)
 const pageSize = ref(20)
@@ -100,11 +116,13 @@ function formatTime(ts) {
   return new Date(ts).toLocaleString('zh-CN')
 }
 
+const statusFilter = ref('')
+
 async function loadTasks() {
   loading.value = true
   try {
     const res = await taskApi.list(page.value, pageSize.value)
-    tasks.value = res.data.tasks || []
+    allTasks.value = res.data.tasks || []
     total.value = res.data.total || 0
   } catch (e) {
     ElMessage.error('加载任务列表失败')

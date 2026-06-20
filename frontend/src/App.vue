@@ -32,13 +32,17 @@
           <el-button circle @click="toggleDark()" size="small">
             {{ isDark ? '☀️' : '🌙' }}
           </el-button>
-          <p>VulnScanner v2.0</p>
-          <p>11种漏洞检测</p>
+          <p>VulnScanner v3.1</p>
+          <p>12种检测 · 15 Nuclei模板</p>
         </div>
       </el-aside>
 
       <el-main :style="{ background: isDark ? '#1a1a2e' : '#f0f2f5' }">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <keep-alive :include="['Dashboard', 'TaskList']">
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </el-main>
     </el-container>
   </div>
