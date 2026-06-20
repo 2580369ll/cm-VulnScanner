@@ -5,28 +5,6 @@ const api = axios.create({
   timeout: 15000,
 })
 
-// 请求拦截器：自动附加 Token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('scanner_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-// 响应拦截器：401 时跳转到登录页
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      localStorage.removeItem('scanner_token')
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
-      }
-    }
-    return Promise.reject(err)
-  }
-)
 
 // 任务相关
 export const taskApi = {

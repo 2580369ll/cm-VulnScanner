@@ -14,8 +14,7 @@ export function useWebSocket(taskId) {
 
   function connect() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const token = localStorage.getItem('scanner_token') || ''
-    const url = `${protocol}//${location.host}/ws/tasks/${taskId}?token=${encodeURIComponent(token)}`
+    const url = `${protocol}//${location.host}/ws/tasks/${taskId}`
 
     ws = new WebSocket(url)
 

@@ -10,7 +10,6 @@ from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.models import init_db
-from app.auth import AuthMiddleware, create_token, verify_token
 from app.api.tasks import router as tasks_router
 from app.api.results import router as results_router
 from app.api.websocket import router as ws_router
@@ -46,9 +45,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 认证中间件
-app.add_middleware(AuthMiddleware)
-
 # 速率限制
 app.state.limiter = limiter
 
@@ -64,13 +60,3 @@ async def health_check():
     return {"status": "ok", "app": settings.app_name}
 
 
-@app.post("/api/auth/login")
-async def login(data: dict):
-    """JWT 登录：验证密码后返回 JWT Token"""
-    from app import auth
-    password = data.get("token", "")
-    legacy_token = os.getenv("SCANNER_TOKEN", "vulnscanner2024")
-    if password == legacy_token:
-        jwt_token = create_token()
-        return {"success": True, "token": jwt_token, "expires_in": auth.TOKEN_EXPIRE_HOURS * 3600}
-    return {"success": False, "detail": "Token 无效"}
