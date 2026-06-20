@@ -47,7 +47,7 @@
 <script setup>
 import { useDark, useToggle } from '@vueuse/core'
 
-const isDark = useDark()
+const isDark = useDark({ storageKey: 'vulnscanner-dark-mode' })
 const toggleDark = useToggle(isDark)
 </script>
 

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from app.auth import AuthMiddleware, create_token
 from app.config import settings
 from app.models import init_db
 from app.api.tasks import router as tasks_router
@@ -45,6 +46,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 认证中间件
+app.add_middleware(AuthMiddleware)
+
 # 速率限制
 app.state.limiter = limiter
 
@@ -58,5 +62,17 @@ app.include_router(ws_router, prefix="/ws")
 async def health_check():
     """健康检查 — 无需认证"""
     return {"status": "ok", "app": settings.app_name}
+
+
+@app.post("/api/auth/login")
+@limiter.limit("5/minute")
+async def login(request: Request, data: dict):
+    """JWT 登录：验证密码后返回 JWT Token"""
+    password = data.get("token", "")
+    legacy_token = os.getenv("SCANNER_TOKEN", "vulnscanner2024")
+    if password == legacy_token:
+        jwt_token = create_token()
+        return {"success": True, "token": jwt_token, "expires_in": 86400}
+    return {"success": False, "detail": "Token 无效"}
 
 
