@@ -48,6 +48,7 @@
             <el-checkbox label="idor" border size="large">🔑 越权IDOR</el-checkbox>
             <el-checkbox label="open_redirect" border size="large">↗️ 重定向</el-checkbox>
             <el-checkbox label="csrf" border size="large">🛡️ CSRF</el-checkbox>
+            <el-checkbox label="nuclei" border size="large">🧬 Nuclei 模板</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 
@@ -121,7 +122,7 @@ const submitting = ref(false)
 const form = reactive({
   target_url: '',
   scan_depth: 2,
-  vuln_types: ['sqli', 'xss', 'file_upload', 'command_injection', 'path_traversal', 'ssrf', 'info_disclosure', 'ssti', 'idor', 'open_redirect', 'csrf'],
+  vuln_types: ['sqli', 'xss', 'file_upload', 'command_injection', 'path_traversal', 'ssrf', 'info_disclosure', 'ssti', 'idor', 'open_redirect', 'csrf', 'nuclei'],
   custom_headers: '',
   custom_cookies: '',
   custom_payloads: '',

@@ -1,0 +1,72 @@
+# 配置错误检测模板
+
+- id: cors-misconfig-wildcard
+  info:
+    name: CORS 配置宽松
+    severity: low
+    description: Access-Control-Allow-Origin 设为 *
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: word
+      words: ["Access-Control-Allow-Origin: *"]
+      part: header
+
+- id: missing-security-headers
+  info:
+    name: 缺少安全响应头
+    severity: low
+    description: 响应缺少 HSTS/CSP/X-Frame-Options
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: word
+      words: ["Strict-Transport-Security", "Content-Security-Policy", "X-Frame-Options"]
+      condition: and
+      negative: true
+
+- id: directory-listing
+  info:
+    name: 目录浏览启用
+    severity: medium
+    description: Web 服务器开启了目录列表功能
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/images/"
+    - method: GET
+      path: "{{BaseURL}}/uploads/"
+    - method: GET
+      path: "{{BaseURL}}/assets/"
+  matchers:
+    - type: word
+      words: ["Index of /", "Parent Directory", "Directory Listing"]
+      condition: or
+
+- id: debug-mode-enabled
+  info:
+    name: 调试模式启用
+    severity: high
+    description: 应用开启了 DEBUG 模式
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: word
+      words: ["debug=True", "DEBUG = True", "APP_DEBUG=true"]
+      condition: or
+
+- id: server-header-version
+  info:
+    name: 服务器版本泄露
+    severity: low
+    description: 响应头暴露了服务器版本信息
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: regex
+      regex: ["Server: Apache/[0-9.]+", "Server: nginx/[0-9.]+", "X-Powered-By: PHP/[0-9.]+"]
+      condition: or
+      part: header

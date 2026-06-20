@@ -1,0 +1,68 @@
+# 技术栈指纹识别模板
+
+- id: tech-spring-boot
+  info:
+    name: Spring Boot 应用
+    severity: info
+    description: 检测到 Spring Boot 应用
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: word
+      words: ["Whitelabel Error Page", "spring-boot"]
+      condition: or
+
+- id: tech-wordpress
+  info:
+    name: WordPress 站点
+    severity: info
+    description: 检测到 WordPress CMS
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+    - method: GET
+      path: "{{BaseURL}}/wp-login.php"
+  matchers:
+    - type: word
+      words: ["wp-content", "wp-includes", "wordpress"]
+      condition: or
+
+- id: tech-laravel
+  info:
+    name: Laravel 应用
+    severity: info
+    description: 检测到 Laravel 框架
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: word
+      words: ["laravel", "XSRF-TOKEN"]
+      condition: or
+
+- id: tech-apache-coyote
+  info:
+    name: Apache Tomcat
+    severity: info
+    description: 检测到 Tomcat 错误页
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/"
+  matchers:
+    - type: word
+      words: ["Apache Tomcat", "Apache-Coyote"]
+      condition: or
+
+- id: tech-nginx
+  info:
+    name: Nginx 服务器
+    severity: info
+    description: 检测到 Nginx 错误页
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/nonexistent_path_404_test"
+  matchers:
+    - type: word
+      words: ["nginx"]
+      part: header

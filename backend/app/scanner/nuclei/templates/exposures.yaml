@@ -1,0 +1,84 @@
+# 敏感文件暴露检测模板集
+
+- id: swagger-ui-exposure
+  info:
+    name: Swagger UI 暴露
+    severity: medium
+    description: Swagger API 文档公开访问
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/swagger-ui.html"
+    - method: GET
+      path: "{{BaseURL}}/swagger/index.html"
+    - method: GET
+      path: "{{BaseURL}}/api/swagger"
+  matchers:
+    - type: word
+      words: ["swagger", "Swagger UI"]
+      condition: and
+
+- id: actuator-health-exposure
+  info:
+    name: Spring Boot Actuator 暴露
+    severity: medium
+    description: Actuator health 端点公开
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/actuator/health"
+    - method: GET
+      path: "{{BaseURL}}/actuator"
+    - method: GET
+      path: "{{BaseURL}}/actuator/env"
+  matchers:
+    - type: word
+      words: ["\"status\"", "UP"]
+      condition: and
+    - type: status
+      status: [200]
+
+- id: phpinfo-exposure
+  info:
+    name: phpinfo() 暴露
+    severity: medium
+    description: PHP 配置信息公开
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/phpinfo.php"
+    - method: GET
+      path: "{{BaseURL}}/info.php"
+    - method: GET
+      path: "{{BaseURL}}/php_info.php"
+  matchers:
+    - type: word
+      words: ["PHP Version", "phpinfo()"]
+      condition: and
+
+- id: git-config-exposure
+  info:
+    name: .git/config 泄露
+    severity: high
+    description: Git 仓库配置公开
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/.git/config"
+  matchers:
+    - type: word
+      words: ["[core]", "[remote"]
+      condition: or
+
+- id: env-file-exposure
+  info:
+    name: .env 文件泄露
+    severity: critical
+    description: 环境变量文件公开
+  requests:
+    - method: GET
+      path: "{{BaseURL}}/.env"
+    - method: GET
+      path: "{{BaseURL}}/.env.local"
+    - method: GET
+      path: "{{BaseURL}}/.env.production"
+  matchers:
+    - type: word
+      words: ["DB_", "APP_KEY", "SECRET"]
+      condition: or

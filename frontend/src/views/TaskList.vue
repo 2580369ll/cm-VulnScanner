@@ -92,7 +92,7 @@ function statusLabel(status) {
 }
 
 function vulnLabel(type) {
-  const m = { sqli: 'SQLi', xss: 'XSS', file_upload: 'Upload', command_injection: 'CMDi', path_traversal: 'LFI', ssrf: 'SSRF', info_disclosure: 'InfoLeak', ssti: 'SSTI', idor: 'IDOR', open_redirect: 'Redirect', csrf: 'CSRF' }
+  const m = { sqli: 'SQLi', xss: 'XSS', file_upload: 'Upload', command_injection: 'CMDi', path_traversal: 'LFI', ssrf: 'SSRF', info_disclosure: 'InfoLeak', ssti: 'SSTI', idor: 'IDOR', open_redirect: 'Redirect', csrf: 'CSRF', nuclei: 'Nuclei' }
   return m[type] || type
 }
 function formatTime(ts) {

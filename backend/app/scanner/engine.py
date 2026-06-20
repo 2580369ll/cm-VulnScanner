@@ -24,6 +24,7 @@ from app.scanner.plugins.ssti import SSTIPlugin
 from app.scanner.plugins.idor import IDORPlugin
 from app.scanner.plugins.open_redirect import OpenRedirectPlugin
 from app.scanner.plugins.csrf import CSRFPlugin
+from app.scanner.plugins.nuclei_plugin import NucleiPlugin
 
 
 class ScanEngine:
@@ -195,6 +196,7 @@ class ScanEngine:
             "idor": IDORPlugin,
             "open_redirect": OpenRedirectPlugin,
             "csrf": CSRFPlugin,
+            "nuclei": NucleiPlugin,
         }
 
         plugins = []
