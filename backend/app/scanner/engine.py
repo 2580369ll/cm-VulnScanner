@@ -20,6 +20,10 @@ from app.scanner.plugins.command_injection import CommandInjectionPlugin
 from app.scanner.plugins.path_traversal import PathTraversalPlugin
 from app.scanner.plugins.ssrf import SSRFPlugin
 from app.scanner.plugins.info_disclosure import InfoDisclosurePlugin
+from app.scanner.plugins.ssti import SSTIPlugin
+from app.scanner.plugins.idor import IDORPlugin
+from app.scanner.plugins.open_redirect import OpenRedirectPlugin
+from app.scanner.plugins.csrf import CSRFPlugin
 
 
 class ScanEngine:
@@ -174,6 +178,10 @@ class ScanEngine:
             "path_traversal": PathTraversalPlugin,
             "ssrf": SSRFPlugin,
             "info_disclosure": InfoDisclosurePlugin,
+            "ssti": SSTIPlugin,
+            "idor": IDORPlugin,
+            "open_redirect": OpenRedirectPlugin,
+            "csrf": CSRFPlugin,
         }
 
         plugins = []

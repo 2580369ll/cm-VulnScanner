@@ -31,23 +31,34 @@ class SQLiPlugin(BasePlugin):
 
     async def check(self, ip: InjectionPoint) -> list[Finding]:
         findings = []
-
-        # 构建基础请求参数
         params = self._build_params(ip)
 
-        # 1) Error-based 探测
-        error_finding = await self._check_error_based(ip, params)
-        if error_finding:
-            findings.append(error_finding)
-            return findings  # 已确认漏洞，无需继续
+        # === 双重确认机制 (Wraith-style dual-confirmation) ===
+        # Error + Boolean 交叉验证，减少误报
 
-        # 2) Boolean-based 盲注
+        error_finding = await self._check_error_based(ip, params)
         bool_finding = await self._check_boolean_based(ip, params)
-        if bool_finding:
-            findings.append(bool_finding)
+
+        if error_finding and bool_finding:
+            # 双确认 → 最高置信度
+            error_finding.confidence = 0.98
+            error_finding.description += " [双重确认: Error + Boolean]"
+            findings.append(error_finding)
             return findings
 
-        # 3) Time-based 盲注
+        if error_finding:
+            # 仅 Error → 高置信度
+            error_finding.confidence = 0.90
+            findings.append(error_finding)
+
+        if bool_finding:
+            # 仅 Boolean → 高置信度（默认已 0.95）
+            findings.append(bool_finding)
+
+        if findings:
+            return findings
+
+        # 3) Time-based 盲注（独立检测）
         time_finding = await self._check_time_based(ip, params)
         if time_finding:
             findings.append(time_finding)
