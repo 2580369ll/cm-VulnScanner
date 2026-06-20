@@ -60,7 +60,7 @@ async function doLogin() {
   try {
     const res = await axios.post('/api/auth/login', { token: token.value })
     if (res.data.success) {
-      localStorage.setItem('scanner_token', token.value)
+      localStorage.setItem('scanner_token', res.data.token)
       router.push('/')
     } else {
       error.value = 'Token 无效'
