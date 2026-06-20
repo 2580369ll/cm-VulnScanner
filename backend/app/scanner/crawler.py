@@ -235,8 +235,7 @@ class Crawler:
                         pass
                 else:
                     # 解析 robots.txt 中的 Allow/Disallow/Sitemap
-                    for line in resp.text.split("
-"):
+                    for line in resp.text.splitlines():
                         line = line.strip()
                         if line.lower().startswith("sitemap:"):
                             s = line.split(":", 1)[1].strip()
