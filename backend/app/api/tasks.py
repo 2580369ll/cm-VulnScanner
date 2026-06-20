@@ -14,8 +14,14 @@ router = APIRouter(tags=["tasks"])
 @router.post("/tasks")
 async def create_task(data: dict, db: AsyncSession = Depends(get_db)):
     """创建扫描任务并异步执行"""
+    target_url = data["target_url"]
+
+    # URL 标准化：公网靶场地址 → Docker 内部地址
+    target_url = target_url.replace("121.43.231.191:8080/targets/", "targets:8080/")
+    target_url = target_url.replace("121.43.231.191:8082/targets/", "targets:8080/")
+
     task = ScanTask(
-        target_url=data["target_url"],
+        target_url=target_url,
         scan_depth=data.get("scan_depth", 2),
         vuln_types=",".join(data.get("vuln_types", ["sqli", "xss", "file_upload"])),
         custom_headers=data.get("custom_headers"),
