@@ -47,6 +47,9 @@ class Crawler:
         """从起始 URL 开始爬取"""
         to_visit: list[tuple[str, int]] = [(start_url, 0)]
 
+        # 预加载 sitemap.xml 和 robots.txt 发现更多 URL
+        await self._load_sitemap(start_url, to_visit)
+
         while to_visit and len(self.visited) < self.max_pages:
             url, depth = to_visit.pop(0)
 
@@ -209,6 +212,54 @@ class Crawler:
                 param_name=header_name,
                 param_type="header",
             ))
+
+    async def _load_sitemap(self, start_url: str, to_visit: list):
+        """预加载 sitemap.xml 和 robots.txt 发现 URL"""
+        import re, xml.etree.ElementTree as ET
+        base = start_url.rstrip("/")
+        for sitemap_url in [f"{base}/sitemap.xml", f"{base}/robots.txt"]:
+            try:
+                resp = await self.client.get(sitemap_url)
+                if resp.status_code != 200:
+                    continue
+                if "sitemap" in sitemap_url:
+                    # 解析 XML sitemap
+                    try:
+                        root = ET.fromstring(resp.text)
+                        ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+                        for loc in root.findall(".//sm:loc", ns):
+                            url = loc.text.strip() if loc.text else ""
+                            if url and self._is_same_domain(url) and url not in self.visited:
+                                to_visit.append((url.split("?")[0], 1))
+                    except Exception:
+                        pass
+                else:
+                    # 解析 robots.txt 中的 Allow/Disallow/Sitemap
+                    for line in resp.text.split("
+"):
+                        line = line.strip()
+                        if line.lower().startswith("sitemap:"):
+                            s = line.split(":", 1)[1].strip()
+                            if s and self._is_same_domain(s):
+                                try:
+                                    r2 = await self.client.get(s)
+                                    if r2.status_code == 200:
+                                        root = ET.fromstring(r2.text)
+                                        ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+                                        for loc in root.findall(".//sm:loc", ns):
+                                            url = loc.text.strip() if loc.text else ""
+                                            if url and self._is_same_domain(url) and url not in self.visited:
+                                                to_visit.append((url.split("?")[0], 1))
+                                except Exception:
+                                    pass
+                        elif line.lower().startswith(("allow:", "disallow:")):
+                            path = line.split(":", 1)[1].strip()
+                            if path and not path.startswith("*"):
+                                full = f"{base}{path}"
+                                if self._is_same_domain(full) and full not in self.visited:
+                                    to_visit.append((full, 1))
+            except Exception:
+                continue
 
     def _extract_cookie_points(self, url: str, response):
         """从 Set-Cookie 响应头中提取 Cookie 注入点"""

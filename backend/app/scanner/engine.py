@@ -36,6 +36,7 @@ class ScanEngine:
         vuln_types: list[str] | None = None,
         custom_headers: dict | None = None,
         custom_cookies: dict | None = None,
+        custom_payloads: dict | None = None,
         proxy: str | None = None,
         progress_callback=None,
         task_id: str = "",
@@ -45,6 +46,7 @@ class ScanEngine:
         self.vuln_types = vuln_types or ["sqli", "xss", "file_upload"]
         self.custom_headers = custom_headers or {}
         self.custom_cookies = custom_cookies or {}
+        self.custom_payloads = custom_payloads or {}
         self.proxy = proxy
         self.progress = progress_callback
         self.task_id = task_id
@@ -54,14 +56,25 @@ class ScanEngine:
         self.base_domain = parsed.netloc
         self.base_scheme = parsed.scheme
 
-        # HTTP 客户端
+        # HTTP 客户端 — 附加全局 Cookie 和 Headers
+        default_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+        }
+        if custom_headers:
+            default_headers.update(custom_headers)
+
         limits = httpx.Limits(max_connections=100, max_keepalive_connections=20)
         self.client_kwargs = {
             "timeout": httpx.Timeout(settings.request_timeout),
             "limits": limits,
             "follow_redirects": True,
             "verify": False,
+            "headers": default_headers,
         }
+        if custom_cookies:
+            # httpx 用 cookies 参数传递
+            self.client_kwargs["cookies"] = custom_cookies
         if proxy:
             self.client_kwargs["proxy"] = proxy
 
@@ -187,7 +200,11 @@ class ScanEngine:
         plugins = []
         for vuln_type in self.vuln_types:
             if vuln_type in plugin_map:
-                plugins.append(plugin_map[vuln_type](client, waf_info))
+                plugin = plugin_map[vuln_type](client, waf_info)
+                # 注入自定义 Payload
+                if vuln_type in self.custom_payloads:
+                    plugin.custom_payloads = self.custom_payloads[vuln_type]
+                plugins.append(plugin)
 
         return plugins
 

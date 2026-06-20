@@ -53,22 +53,33 @@
 
         <el-divider content-position="left">高级选项</el-divider>
 
-        <el-form-item label="自定义 Headers">
-          <el-input
-            v-model="form.custom_headers"
-            type="textarea"
-            :rows="3"
-            placeholder='{"Authorization": "Bearer xxx", "X-Custom": "value"}'
-          />
-        </el-form-item>
-
         <el-form-item label="自定义 Cookies">
           <el-input
             v-model="form.custom_cookies"
             type="textarea"
             :rows="2"
-            placeholder='{"sessionid": "abc123"}'
+            placeholder='{"sessionid": "abc123", "token": "xyz"}'
           />
+          <span style="font-size:12px;color:#999;">JSON格式，用于登录态扫描。浏览器F12→Application→Cookies 复制</span>
+        </el-form-item>
+
+        <el-form-item label="自定义 Headers">
+          <el-input
+            v-model="form.custom_headers"
+            type="textarea"
+            :rows="2"
+            placeholder='{"Authorization": "Bearer xxx", "X-Custom": "value"}'
+          />
+        </el-form-item>
+
+        <el-form-item label="自定义 Payload">
+          <el-input
+            v-model="form.custom_payloads"
+            type="textarea"
+            :rows="4"
+            placeholder="JSON格式，留空使用内置Payload库"
+          />
+          <span style="font-size:12px;color:#999;">JSON格式，key=漏洞类型，value=Payload数组。留空则使用内置Payload库</span>
         </el-form-item>
 
         <el-form-item label="代理">
@@ -113,6 +124,7 @@ const form = reactive({
   vuln_types: ['sqli', 'xss', 'file_upload', 'command_injection', 'path_traversal', 'ssrf', 'info_disclosure', 'ssti', 'idor', 'open_redirect', 'csrf'],
   custom_headers: '',
   custom_cookies: '',
+  custom_payloads: '',
   proxy: '',
 })
 
@@ -143,6 +155,10 @@ async function submitTask() {
     if (form.custom_cookies.trim()) {
       try { data.custom_cookies = JSON.stringify(JSON.parse(form.custom_cookies)) }
       catch { ElMessage.warning('Cookies JSON 格式无效'); submitting.value = false; return }
+    }
+    if (form.custom_payloads.trim()) {
+      try { data.custom_payloads = JSON.stringify(JSON.parse(form.custom_payloads)) }
+      catch { ElMessage.warning('Payload JSON 格式无效'); submitting.value = false; return }
     }
     if (form.proxy.trim()) {
       data.proxy = form.proxy

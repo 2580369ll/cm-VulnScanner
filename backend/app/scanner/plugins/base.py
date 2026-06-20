@@ -70,6 +70,7 @@ class BasePlugin(ABC):
         """
         self.client = http_client
         self.waf_info = waf_info or {}
+        self.custom_payloads: list[str] = []
 
     @abstractmethod
     async def check(self, injection_point: InjectionPoint) -> list[Finding]:

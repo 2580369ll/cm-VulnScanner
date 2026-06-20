@@ -20,6 +20,7 @@ async def create_task(data: dict, db: AsyncSession = Depends(get_db)):
         vuln_types=",".join(data.get("vuln_types", ["sqli", "xss", "file_upload"])),
         custom_headers=data.get("custom_headers"),
         custom_cookies=data.get("custom_cookies"),
+        custom_payloads=data.get("custom_payloads"),
         proxy=data.get("proxy"),
     )
     db.add(task)

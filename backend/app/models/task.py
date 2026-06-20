@@ -20,6 +20,7 @@ class ScanTask(Base):
     vuln_types: Mapped[str] = mapped_column(String(256), default="sqli,xss,file_upload")
     custom_headers: Mapped[str | None] = mapped_column(Text, nullable=True)
     custom_cookies: Mapped[str | None] = mapped_column(Text, nullable=True)
+    custom_payloads: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: {"sqli":["'OR 1=1--"],...}
     proxy: Mapped[str | None] = mapped_column(String(256), nullable=True)
     total_endpoints: Mapped[int] = mapped_column(Integer, default=0)
     total_vulns: Mapped[int] = mapped_column(Integer, default=0)
@@ -40,6 +41,7 @@ class ScanTask(Base):
             "vuln_types": self.vuln_types.split(",") if self.vuln_types else [],
             "total_endpoints": self.total_endpoints, "total_vulns": self.total_vulns,
             "scanned_endpoints": self.scanned_endpoints, "waf_detected": self.waf_detected,
+            "custom_payloads": self.custom_payloads,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,

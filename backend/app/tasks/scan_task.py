@@ -67,12 +67,16 @@ def run_scan_task(self, task_id: str):
 
             try:
                 # 创建并运行扫描引擎
+                # 解析自定义 Payload
+                custom_payloads = json.loads(task.custom_payloads) if task.custom_payloads else None
+
                 engine = ScanEngine(
                     target_url=task.target_url,
                     scan_depth=task.scan_depth,
                     vuln_types=vuln_types,
                     custom_headers=headers,
                     custom_cookies=cookies,
+                    custom_payloads=custom_payloads,
                     proxy=task.proxy,
                     progress_callback=progress_callback,
                     task_id=task_id,
