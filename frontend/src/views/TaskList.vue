@@ -58,10 +58,12 @@
       <div style="margin-top:15px;text-align:right;">
         <el-pagination
           v-model:current-page="page"
-          :page-size="20"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
           :total="total"
-          layout="prev, pager, next, total"
+          layout="sizes, prev, pager, next, total"
           @current-change="loadTasks"
+          @size-change="loadTasks"
         />
       </div>
     </el-card>
@@ -76,6 +78,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const tasks = ref([])
 const loading = ref(false)
 const page = ref(1)
+const pageSize = ref(20)
 const total = ref(0)
 
 function statusType(status) {
@@ -100,7 +103,7 @@ function formatTime(ts) {
 async function loadTasks() {
   loading.value = true
   try {
-    const res = await taskApi.list(page.value)
+    const res = await taskApi.list(page.value, pageSize.value)
     tasks.value = res.data.tasks || []
     total.value = res.data.total || 0
   } catch (e) {

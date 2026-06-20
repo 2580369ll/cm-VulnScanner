@@ -63,19 +63,38 @@
     <!-- 扫描完成时自动加载结果 -->
     <el-card v-if="task.status === 'completed'">
       <template #header>
-        <strong>🐛 漏洞结果 ({{ vulnerabilities.length }})</strong>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <strong>🐛 漏洞结果 ({{ filteredVulns.length }})</strong>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <el-select v-model="filterSeverity" placeholder="严重度" clearable size="small" style="width:100px;">
+              <el-option label="严重" value="critical" />
+              <el-option label="高危" value="high" />
+              <el-option label="中危" value="medium" />
+              <el-option label="低危" value="low" />
+            </el-select>
+            <el-select v-model="filterType" placeholder="类型" clearable size="small" style="width:120px;">
+              <el-option v-for="t in allTypes" :key="t" :label="t" :value="t" />
+            </el-select>
+            <el-input v-model="filterText" placeholder="搜索端点/参数" clearable size="small" style="width:180px;" />
+            <el-button size="small" @click="exportJSON">📥 JSON</el-button>
+            <el-button size="small" type="primary" @click="exportHTML">📄 HTML</el-button>
+          </div>
+        </div>
       </template>
-      <div v-if="vulnerabilities.length === 0" style="text-align:center;padding:40px;color:#999;">
+      <div v-if="filteredVulns.length === 0 && vulnerabilities.length > 0" style="text-align:center;padding:20px;color:#999;">
+        筛选无结果
+      </div>
+      <div v-else-if="vulnerabilities.length === 0" style="text-align:center;padding:40px;color:#999;">
         <p style="font-size:48px;">🎉</p>
         <p>未发现漏洞</p>
       </div>
-      <VulnCard v-for="vuln in vulnerabilities" :key="vuln.id" :vuln="vuln" />
+      <VulnCard v-for="vuln in filteredVulns" :key="vuln.id" :vuln="vuln" />
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { taskApi, resultApi } from '../api/tasks'
 import { useWebSocket } from '../api/results'
@@ -84,6 +103,44 @@ import ScanProgress from '../components/ScanProgress.vue'
 import VulnCard from '../components/VulnCard.vue'
 
 const route = useRoute()
+const filterSeverity = ref('')
+const filterType = ref('')
+const filterText = ref('')
+
+const allTypes = computed(() => [...new Set(vulnerabilities.value.map(v => v.vuln_type))])
+
+const filteredVulns = computed(() => {
+  let list = vulnerabilities.value
+  if (filterSeverity.value) list = list.filter(v => v.severity === filterSeverity.value)
+  if (filterType.value) list = list.filter(v => v.vuln_type === filterType.value)
+  if (filterText.value) {
+    const q = filterText.value.toLowerCase()
+    list = list.filter(v => v.endpoint.toLowerCase().includes(q) || v.parameter.toLowerCase().includes(q))
+  }
+  return list
+})
+
+function exportJSON() {
+  const data = JSON.stringify(vulnerabilities.value, null, 2)
+  const blob = new Blob([data], { type: 'application/json' })
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `vulns_${taskId}.json`; a.click()
+  ElMessage.success('JSON 已导出')
+}
+
+function exportHTML() {
+  const rows = vulnerabilities.value.map(v =>
+    `<tr><td style="color:${severityColor(v.severity)};font-weight:bold">${v.severity.toUpperCase()}</td><td>${v.vuln_type}</td><td>${v.endpoint}</td><td>${v.parameter}</td><td>${v.payload?.substring(0,100)||''}</td></tr>`
+  ).join('')
+  const html = `<html><head><meta charset="utf-8"><title>扫描报告</title><style>body{font-family:sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th{background:#1a1a2e;color:#fff;padding:8px}td{padding:6px;border-bottom:1px solid #ddd}</style></head><body><h1>漏洞扫描报告</h1><p>目标: ${task.value.target_url}</p><table><tr><th>严重度</th><th>类型</th><th>端点</th><th>参数</th><th>Payload</th></tr>${rows}</table></body></html>`
+  const blob = new Blob([html], { type: 'text/html' })
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report_${taskId}.html`; a.click()
+  ElMessage.success('HTML 报告已导出')
+}
+
+function severityColor(s) {
+  const m = { critical:'#dc3545', high:'#fd7e14', medium:'#ffc107', low:'#28a745', info:'#17a2b8' }
+  return m[s] || '#999'
+}
 const taskId = route.params.id
 
 const task = ref({})
