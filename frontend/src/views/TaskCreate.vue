@@ -13,11 +13,22 @@
         <el-form-item label="目标 URL" prop="target_url">
           <el-input
             v-model="form.target_url"
-            placeholder="https://example.com"
+            placeholder="输入要扫描的网址，例如 https://example.com"
             size="large"
-          >
-            <template #prepend>https://</template>
-          </el-input>
+          />
+          <div style="margin-top:8px;font-size:12px;color:#999;">
+            💡 测试靶场：
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/sqli/'" :underline="false">SQLi</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/xss/'" :underline="false">XSS</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/upload/'" :underline="false">上传</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/cmd/'" :underline="false">命令注入</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/lfi/'" :underline="false">LFI</el-link> ·
+            <br>
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/ssrf/'" :underline="false">SSRF</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/info/'" :underline="false">信息泄露</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/ssti/'" :underline="false">SSTI</el-link> ·
+            <el-link type="primary" @click="form.target_url='http://121.43.231.191:8080/targets/idor/'" :underline="false">IDOR</el-link>
+          </div>
         </el-form-item>
 
         <el-form-item label="扫描深度">
