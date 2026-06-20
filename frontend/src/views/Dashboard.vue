@@ -108,6 +108,10 @@ async function loadData() {
   loading.value = false
 }
 
+function vulnName(name) {
+  const m = { sqli:'SQL注入', xss:'XSS', file_upload:'文件上传', command_injection:'命令注入', path_traversal:'路径遍历', ssrf:'SSRF', info_disclosure:'信息泄露', ssti:'模板注入', idor:'越权IDOR', open_redirect:'重定向', csrf:'CSRF' }
+  return m[name] || name
+}
 function renderChart() {
   if (!typeChartRef.value) return
   const chart = echarts.init(typeChartRef.value)
@@ -123,7 +127,7 @@ function renderChart() {
       itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
       label: { show: true, formatter: '{b}\n{d}%' },
       data: Object.entries(data).map(([name, value]) => ({
-        name: name === 'sqli' ? 'SQL注入' : name === 'xss' ? 'XSS' : name === 'file_upload' ? '文件上传' : name,
+        name: vulnName(name),
         value,
       })),
     }],

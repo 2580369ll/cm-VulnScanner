@@ -24,7 +24,7 @@
               size="small"
               style="margin:0 2px;"
             >
-              {{ t === 'sqli' ? 'SQLi' : t === 'xss' ? 'XSS' : 'Upload' }}
+              {{ vulnLabel(t) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -88,6 +88,10 @@ function statusLabel(status) {
   return m[status] || status
 }
 
+function vulnLabel(type) {
+  const m = { sqli: 'SQLi', xss: 'XSS', file_upload: 'Upload', command_injection: 'CMDi', path_traversal: 'LFI', ssrf: 'SSRF', info_disclosure: 'InfoLeak', ssti: 'SSTI', idor: 'IDOR', open_redirect: 'Redirect', csrf: 'CSRF' }
+  return m[type] || type
+}
 function formatTime(ts) {
   if (!ts) return '-'
   return new Date(ts).toLocaleString('zh-CN')

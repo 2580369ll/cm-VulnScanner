@@ -32,6 +32,10 @@ function severityColors(sev) {
   const m = { critical: '#dc3545', high: '#fd7e14', medium: '#ffc107', low: '#28a745', info: '#17a2b8' }
   return m[sev] || '#6c757d'
 }
+function typeLabel(type) {
+  const m = { sqli:'SQL注入', xss:'XSS', file_upload:'文件上传', command_injection:'命令注入', path_traversal:'路径遍历', ssrf:'SSRF', info_disclosure:'信息泄露', ssti:'模板注入', idor:'越权IDOR', open_redirect:'重定向', csrf:'CSRF' }
+  return m[type] || type
+}
 
 async function loadReport() {
   if (!taskId) return
@@ -59,7 +63,7 @@ async function loadReport() {
       <div style="border-left:4px solid ${severityColors(v.severity)};background:white;padding:15px;margin:10px 0;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);">
         <h4 style="margin:0 0 10px;color:#1a1a2e;">
           <span style="background:${severityColors(v.severity)};color:white;padding:2px 8px;border-radius:3px;font-size:12px;margin-right:8px;">${v.severity.toUpperCase()}</span>
-          ${v.vuln_type === 'sqli' ? 'SQL注入' : v.vuln_type === 'xss' ? 'XSS' : '文件上传'}
+          ${typeLabel(v.vuln_type)}
         </h4>
         <p><strong>端点:</strong> <code>${v.endpoint}</code></p>
         <p><strong>参数:</strong> ${v.parameter} (${v.method})</p>

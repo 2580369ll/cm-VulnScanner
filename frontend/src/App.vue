@@ -33,7 +33,7 @@
             {{ isDark ? '☀️' : '🌙' }}
           </el-button>
           <p>VulnScanner v2.0</p>
-          <p>7种漏洞检测</p>
+          <p>11种漏洞检测</p>
         </div>
       </el-aside>
 

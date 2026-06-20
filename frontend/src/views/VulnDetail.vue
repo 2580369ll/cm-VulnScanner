@@ -114,9 +114,11 @@ const severityColor = computed(() => severityColors[vuln.value?.severity] || '#6
 
 function typeLabel(type) {
   const m = {
-    sqli: 'SQL 注入',
-    xss: '跨站脚本 (XSS)',
-    file_upload: '文件上传漏洞',
+    sqli: 'SQL 注入', xss: '跨站脚本 (XSS)', file_upload: '文件上传漏洞',
+    command_injection: '命令注入', path_traversal: '路径遍历 (LFI)',
+    ssrf: 'SSRF 服务端请求伪造', info_disclosure: '信息泄露',
+    ssti: '模板注入 (SSTI)', idor: '越权访问 (IDOR)',
+    open_redirect: 'URL 重定向', csrf: '跨站请求伪造 (CSRF)',
   }
   return m[type] || type
 }

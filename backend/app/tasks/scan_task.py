@@ -61,6 +61,9 @@ def run_scan_task(self, task_id: str):
                 elif msg_type == "vulnerability_found":
                     task.total_vulns += 1
                     await db.commit()
+                elif msg_type == "waf_detected":
+                    task.waf_detected = msg.get("waf", "unknown")
+                    await db.commit()
 
             try:
                 # 创建并运行扫描引擎
@@ -100,6 +103,9 @@ def run_scan_task(self, task_id: str):
                     )
                     db.add(vuln)
 
+                # 检查是否被取消
+                if task.status == "cancelled":
+                    return
                 task.total_vulns = len(findings)
                 task.status = "completed"
                 task.completed_at = datetime.utcnow()
